@@ -1,0 +1,44 @@
+name: Test
+
+on:
+  push:
+    branches: [ dev ]
+  # pull_request:
+  #   branches: [ master ]
+  workflow_dispatch:
+    inputs:
+      INPUT_1:
+        description: input 1
+        required: true
+      INPUT_2:
+        description: input 2
+        required: false
+
+jobs:
+  test-job:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18.x
+          cache: npm
+
+      - name: Install dependencies
+        run: |
+          if [ -e yarn.lock ]; then
+            yarn install --frozen-lockfile
+          elif [ -e package-lock.json ]; then
+            npm ci
+          else
+            npm i
+          fi
+      # - run: npm run build --if-present
+
+      - name: Run tests
+        run: yarn run test
