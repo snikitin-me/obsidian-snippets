@@ -31,7 +31,7 @@ export default class SettingsTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName("Snippets prefix tags")
-			.setDesc("...")
+			.setDesc("The prefix for snippet tag. Defaults to 'sn/'")
 			.addText((text) =>
 				text
 					.setPlaceholder("sn/")
@@ -44,7 +44,7 @@ export default class SettingsTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName("Vscode folder")
-			.setDesc("...")
+			.setDesc("Path to the global snippet file. Should change User name. (File will be named obsidian.code-snippets)")
 			.addText((text) =>
 				text
 					.setPlaceholder("C:/Users/Name/AppData/Roaming/Code/User/snippets")
