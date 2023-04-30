@@ -23,8 +23,8 @@ export default class VSCodeSnippets {
 		this.vscodeSnippetsFileName = "obsidian.code-snippets"
 	}
 
-	async saveSnippetsToVScodeFile(filesWithTags: TFile[] ){
-		if(this.vscodeSnippetsFolder === ""){
+	async saveSnippetsToVScodeFile(filesWithTags: TFile[]) {
+		if (this.vscodeSnippetsFolder === "") {
 			throw new Error("Setting vscodeSnippetsFolder is empty")
 		}
 
@@ -35,15 +35,16 @@ export default class VSCodeSnippets {
 
 		fs.writeFile(normalizedNewPath, jsonContent, 'utf8', function (err) {
 			if (err) {
-				console.log("An error occured while writing JSON Object to File.");
-				return console.log(err);
+				const msg = "An error occured while writing JSON Object to File."
+				console.log(msg, err);
+				throw new Error(err.message);
 			}
 
 			console.log("JSON file has been saved.");
 		});
 	}
 
-	async convertToVScodeSnippetFile(filesWithTags: TFile[]){
+	async convertToVScodeSnippetFile(filesWithTags: TFile[]) {
 		let snippets: any = {}
 		for await (const file of filesWithTags) {
 
@@ -52,13 +53,13 @@ export default class VSCodeSnippets {
 				const fileContent = await file.vault.read(file)
 				this.createSnippetsFromMDFile(fileContent).forEach(snippet => {
 
-					if(snippets[snippet!.Id]){
+					if (snippets[snippet!.Id]) {
 						throw new Error(`Dublicated snippet id(${snippet!.Id})`)
 					}
 
 					snippets[snippet!.Id] = this.convertToVsCodeFormat(snippet);
 				})
-			} catch(e) {
+			} catch (e) {
 				console.log(file.path, e)
 			}
 		}
@@ -67,56 +68,67 @@ export default class VSCodeSnippets {
 	}
 
 	createSnippetsFromMDFile(fileContent: string) {
-
-		if(!this.snippetsPrefix){
-			throw new Error("Setting snippetsPrefix is undefined!")
-		}
-
-		if(this.snippetsPrefix.startsWith('#')){
-			throw new Error("Setting snippetsPrefix must not start with '#' !")
-		}
-
 		let snippets = [];
-		let snippet: Snippet | undefined;
+
+		try {
+			let snippet: Snippet | undefined;
+
+			if (!this.snippetsPrefix) {
+				throw new Error("Setting snippetsPrefix is undefined!")
+			}
+
+			if (this.snippetsPrefix.startsWith('#')) {
+				throw new Error("Setting snippetsPrefix must not start with '#' !")
+			}
+
 
 			const fmResult = fm(fileContent);
 			const tokens = marked.lexer(fmResult.body);
 
-		while (tokens.length) {
-			let settings, description, id, body
+			while (tokens.length) {
+				let settings, description, id, body
 
-			if(this.isNewSnippet(tokens[0])){
-				if(snippet !== undefined){
-					snippets.push(snippet)
+				if (this.isNewSnippet(tokens[0])) {
+					if (snippet !== undefined) {
+						snippets.push(snippet)
+					}
+					snippet = new Snippet()
+					snippet.configure(fmResult.attributes)
 				}
-				snippet = new Snippet()
-				snippet.configure(fmResult.attributes)
+
+				if ((description = this.parseSnippetDescription(tokens))) {
+					snippet!.Description = description;
+				} else if ((id = this.parseSnippetId(tokens))) {
+
+					if (!snippet) {
+						throw new Error(`Snippet format incorrect`);
+					}
+
+					snippet!.Id = id
+					snippet!.Prefix = id // TODO handle mutiple prefixes
+				} else if ((body = this.parseSnippetBody(tokens))) {
+					snippet!.Body = body
+				} else {
+					tokens.shift()
+				}
 			}
 
-			if ((description = this.parseSnippetDescription(tokens))) {
-				snippet!.Description = description;
-			} else if ((id = this.parseSnippetId(tokens))) {
-				snippet!.Id = id
-				snippet!.Prefix = id // TODO handle mutiple prefixes
-			} else if ((body = this.parseSnippetBody(tokens))) {
-				snippet!.Body = body
-			} else {
-				tokens.shift()
+			// if(snippet!.Prefix[0] == null){
+			if (!snippet!.Prefix) {
+				throw new Error("Snippet prefix is not found!")
 			}
-		}
 
-		// if(snippet!.Prefix[0] == null){
-		if(!snippet!.Prefix){
-			throw new Error("Snippet prefix is not found!")
-		}
+			// add last snippet to snippets object
+			snippets.push(snippet)
 
-		// add last snippet to snippets object
-		snippets.push(snippet)
+		} catch (error) {
+			console.error(error.message, error)
+		}
 
 		return snippets;
 	}
 
-	convertToVsCodeFormat(snippet: Snippet | undefined){
+	convertToVsCodeFormat(snippet: Snippet | undefined) {
 		return {
 			description: snippet!.Description,
 			body: snippet!.Body,
@@ -131,7 +143,7 @@ export default class VSCodeSnippets {
 
 		if (token.raw.startsWith('#' + this.snippetsPrefix)) {
 			id = token.raw.trim()
-			if(!id){
+			if (!id) {
 				throw new Error("Snippet Id is undefined!");
 			}
 			tokens.shift()
@@ -156,7 +168,7 @@ export default class VSCodeSnippets {
 		return header;
 	}
 
-	isNewSnippet(token: any){
+	isNewSnippet(token: any) {
 		return (token.type === "heading" && token.depth === 1)
 	}
 
@@ -173,7 +185,7 @@ export default class VSCodeSnippets {
 
 			while ((token = tokens[0])) {
 				// if next block of code
-				if(token.type === "heading" && token.depth === 2 ){
+				if (token.type === "heading" && token.depth === 2) {
 					break
 				}
 
@@ -190,10 +202,10 @@ export default class VSCodeSnippets {
 
 		let token = tokens[0];
 
-			if(token.type === "code"){
-				body = token.text.split("\n")
-				tokens.shift()
-			}
+		if (token.type === "code") {
+			body = token.text.split("\n")
+			tokens.shift()
+		}
 
 		return body;
 	}

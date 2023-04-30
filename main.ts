@@ -31,17 +31,23 @@ export default class MyPlugin extends Plugin {
 		console.log("onload");
 	}
 
-	async addSnippetRibbonIcon(){
-		// This creates an icon in the left ribbon.
-		const ribbonIconEl = this.addRibbonIcon('dice', 'Export snippets', (evt: MouseEvent) => {
+	async addSnippetRibbonIcon() {
+		try {
+			// This creates an icon in the left ribbon.
+			const ribbonIconEl = this.addRibbonIcon('dice', 'Export snippets', (evt: MouseEvent) => {
 
-			if(this.settings.snippetsPrefix === ""){
-				throw new Error("snippetsPrefix is empty")
-			}
+				if (this.settings.snippetsPrefix === "") {
+					throw new Error("snippetsPrefix is empty")
+				}
 
-			let filesWithTags = getTagFiles(this.app, this.settings.snippetsPrefix)
-			this.vscode.saveSnippetsToVScodeFile(filesWithTags)
-		});
+				let filesWithTags = getTagFiles(this.app, this.settings.snippetsPrefix)
+				this.vscode.saveSnippetsToVScodeFile(filesWithTags)
+			});
+
+		} catch (error) {
+			console.error(error);
+			new Notice(`${error.message}`);
+		}
 	}
 
 	onunload() {

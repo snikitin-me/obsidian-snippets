@@ -50,7 +50,7 @@ describe("Name of the group", () => {
 	it("it should handle markdown snippet", () => {
 
 		const fileContent = fs.readFileSync(
-			path.resolve(__dirname, './__test__/Snippet.md')
+			path.resolve(__dirname, './__mock__/Snippet.md')
 			, 'utf8'
 		);
 
@@ -63,10 +63,10 @@ describe("Name of the group", () => {
 		// FIXME: \n\n\n should be removed
 		expect(snippets[0]!.Description).toBe("Line 1...\nLine 2...\n[link](http://snikitin.me)\n\n\n");
 		expect(snippets[0]!.Body).toEqual([
-            "for (const ${2:element} of ${1:array}) {",
-            "    \\t$0",
-            "}",
-        ]);
+			"for (const ${2:element} of ${1:array}) {",
+			"    \\t$0",
+			"}",
+		]);
 
 		// TODO test for multiple lines
 	})
@@ -74,7 +74,7 @@ describe("Name of the group", () => {
 	it("it should handle broken snippet", () => {
 
 		const fileContent = fs.readFileSync(
-			path.resolve(__dirname, './__test__/Null.md')
+			path.resolve(__dirname, './__mock__/Null.md')
 			, 'utf8'
 		);
 
