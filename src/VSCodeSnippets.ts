@@ -67,10 +67,10 @@ export default class VSCodeSnippets {
 		return snippets
 	}
 
-	createSnippetsFromMDFile(fileContent: string) {
-		let snippets = [];
+	createSnippetsFromMDFile(fileContent: string): Snippet[] {
+		let snippets: Snippet[] = [];
 
-		try {
+		// try {
 			let snippet: Snippet | undefined;
 
 			if (!this.snippetsPrefix) {
@@ -119,11 +119,13 @@ export default class VSCodeSnippets {
 			}
 
 			// add last snippet to snippets object
-			snippets.push(snippet)
+			if(snippet instanceof Snippet){
+				snippets.push(snippet)
+			}
 
-		} catch (error) {
-			console.error(error.message, error)
-		}
+		// } catch (error) {
+		// 	console.error(error.message, error)
+		// }
 
 		return snippets;
 	}
