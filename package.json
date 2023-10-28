@@ -1,5 +1,5 @@
 {
-	"name": "obsidian-snippets-plugin",
+	"name": "obsidian-snippets",
 	"version": "1.0.0",
 	"description": "A snippet plugin for obsidian",
 	"main": "main.js",
