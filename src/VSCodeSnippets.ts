@@ -51,7 +51,7 @@ export default class VSCodeSnippets {
 			// FIXME error break all snippets!?
 			try {
 				const fileContent = await file.vault.read(file)
-				this.createSnippetsFromMDFile(fileContent).forEach(snippet => {
+				this.createSnippetsFromMDFile(file.path, fileContent).forEach(snippet => {
 
 					if (snippets[snippet!.Id]) {
 						throw new Error(`Dublicated snippet id(${snippet!.Id})`)
@@ -67,65 +67,59 @@ export default class VSCodeSnippets {
 		return snippets
 	}
 
-	createSnippetsFromMDFile(fileContent: string): Snippet[] {
+	createSnippetsFromMDFile(filePath: String, fileContent: string): Snippet[] {
 		let snippets: Snippet[] = [];
 
-		// try {
-			let snippet: Snippet | undefined;
+		let snippet: Snippet | undefined;
 
-			if (!this.snippetsPrefix) {
-				throw new Error("Setting snippetsPrefix is undefined!")
+		if (!this.snippetsPrefix) {
+			throw new Error(`Setting snippetsPrefix is undefined! Snippet file path: ${filePath}.`)
+		}
+
+		if (this.snippetsPrefix.startsWith('#')) {
+			throw new Error(`Setting snippetsPrefix should not start with '#'! Snippet file path: ${filePath}.`)
+		}
+
+		const fmResult = fm(fileContent);
+		const tokens = marked.lexer(fmResult.body);
+
+		while (tokens.length) {
+			let settings, description, id, body
+
+			if (this.isNewSnippet(tokens[0])) {
+				if (snippet !== undefined) {
+					snippets.push(snippet)
+				}
+				snippet = new Snippet()
+				snippet.configure(fmResult.attributes)
 			}
 
-			if (this.snippetsPrefix.startsWith('#')) {
-				throw new Error("Setting snippetsPrefix must not start with '#' !")
-			}
+			if ((description = this.parseSnippetDescription(tokens))) {
+				snippet!.Description = description;
+			} else if ((id = this.parseSnippetId(tokens))) {
 
-
-			const fmResult = fm(fileContent);
-			const tokens = marked.lexer(fmResult.body);
-
-			while (tokens.length) {
-				let settings, description, id, body
-
-				if (this.isNewSnippet(tokens[0])) {
-					if (snippet !== undefined) {
-						snippets.push(snippet)
-					}
-					snippet = new Snippet()
-					snippet.configure(fmResult.attributes)
+				if (!snippet) {
+					throw new Error(`Snippet format incorrect! Snippet file path: ${filePath}.`);
 				}
 
-				if ((description = this.parseSnippetDescription(tokens))) {
-					snippet!.Description = description;
-				} else if ((id = this.parseSnippetId(tokens))) {
-
-					if (!snippet) {
-						throw new Error(`Snippet format incorrect`);
-					}
-
-					snippet!.Id = id
-					snippet!.Prefix = id // TODO handle mutiple prefixes
-				} else if ((body = this.parseSnippetBody(tokens))) {
-					snippet!.Body = body
-				} else {
-					tokens.shift()
-				}
+				snippet!.Id = id
+				snippet!.Prefix = id // TODO handle mutiple prefixes
+			} else if ((body = this.parseSnippetBody(tokens))) {
+				snippet!.Body = body
+			} else {
+				tokens.shift()
 			}
+		}
 
-			// if(snippet!.Prefix[0] == null){
-			if (!snippet!.Prefix) {
-				throw new Error("Snippet prefix is not found!")
-			}
+		// if(snippet!.Prefix[0] == null){
+		if (!snippet!.Prefix) {
+			throw new Error("Snippet prefix is not found! Snippet file path: ${filePath}.")
+		}
 
-			// add last snippet to snippets object
-			if(snippet instanceof Snippet){
-				snippets.push(snippet)
-			}
-
-		// } catch (error) {
-		// 	console.error(error.message, error)
-		// }
+		// add last snippet to snippets object
+		if (snippet instanceof Snippet) {
+			snippets.push(snippet)
+		}
 
 		return snippets;
 	}

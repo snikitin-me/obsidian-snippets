@@ -49,12 +49,10 @@ describe("Name of the group", () => {
 
 	it("it should handle markdown snippet", () => {
 
-		const fileContent = fs.readFileSync(
-			path.resolve(__dirname, '../example/Hello world.md')
-			, 'utf8'
-		);
+		const filePath = path.resolve(__dirname, '../example/Hello world.md')
+		const fileContent = fs.readFileSync(filePath, 'utf8');
 
-		let snippets = VSSnippets.createSnippetsFromMDFile(fileContent);
+		let snippets = VSSnippets.createSnippetsFromMDFile(filePath, fileContent);
 
 		expect(snippets.length).toBe(2);
 
@@ -73,15 +71,9 @@ describe("Name of the group", () => {
 
 	it("Should throw an error when the snippet is empty", () => {
 
-		const fileContent = fs.readFileSync(
-			path.resolve(__dirname, '../example/Null.md')
-			, 'utf8'
-		);
+		const filePath = path.resolve(__dirname, '../example/Null.md')
+		const fileContent = fs.readFileSync(filePath, 'utf8')
 
-		// let snippets = VSSnippets.createSnippetsFromMDFile(fileContent);
-		// expect(snippets.length).toBe(0);
-
-
-		expect(() => VSSnippets.createSnippetsFromMDFile(fileContent)).toThrow("Snippet format incorrect");
+		expect(() => VSSnippets.createSnippetsFromMDFile(filePath, fileContent)).toThrow(`Snippet format incorrect! Snippet file path: ${filePath}.`)
 	})
 });
